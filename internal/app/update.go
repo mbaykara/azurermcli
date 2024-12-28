@@ -333,14 +333,14 @@ func (m *Model) updateTableWithResources() {
 }
 
 func formatResourceType(resourceType string) string {
-	// Remove the Microsoft.* prefix and convert to title case
-	parts := strings.Split(resourceType, "/")
-	if len(parts) >= 2 {
-		lastPart := parts[len(parts)-1]
-		caser := cases.Title(language.English)
-		return caser.String(lastPart)
+	// Get the last part after the final slash
+	lastSlashIndex := strings.LastIndex(resourceType, "/")
+	if lastSlashIndex == -1 {
+		return resourceType
 	}
-	return resourceType
+	lastPart := resourceType[lastSlashIndex+1:]
+	caser := cases.Title(language.English)
+	return caser.String(lastPart)
 }
 
 func getResourceStatus(resource interface{}) string {
