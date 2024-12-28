@@ -8,8 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mbaykara/azurermcli/internal/azure"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 // Resource types available in the UI
@@ -338,9 +336,31 @@ func formatResourceType(resourceType string) string {
 	if lastSlashIndex == -1 {
 		return resourceType
 	}
+
+	// Extract the resource type name
 	lastPart := resourceType[lastSlashIndex+1:]
-	caser := cases.Title(language.English)
-	return caser.String(lastPart)
+
+	// Split by uppercase letters to preserve camelCase
+	words := strings.Split(lastPart, "")
+	var result strings.Builder
+
+	for i, char := range words {
+		// If it's uppercase and not the first character and previous char isn't uppercase
+		if i > 0 && strings.ToUpper(char) == char && strings.ToLower(words[i-1]) == words[i-1] {
+			result.WriteString(" ")
+		}
+		result.WriteString(char)
+	}
+
+	// Title case each word while preserving internal uppercase
+	parts := strings.Split(result.String(), " ")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[0:1]) + part[1:]
+		}
+	}
+
+	return strings.Join(parts, "")
 }
 
 func getResourceStatus(resource interface{}) string {
