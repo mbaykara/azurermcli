@@ -8,7 +8,18 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mbaykara/azurermcli/internal/azure"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
+
+// Resource types available in the UI
+var resourceTypes = []string{
+	"Clusters",
+	"Compute",
+	"Network",
+	"Storage",
+	"All",
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -305,8 +316,8 @@ func (m *Model) updateTableWithResources() {
 		}
 	}
 
+	var message string
 	if len(rows) == 0 {
-		message := "No resources found"
 		if m.searchMode {
 			message = fmt.Sprintf("No matches for '%s'", m.searchQuery)
 		} else {
@@ -325,7 +336,9 @@ func formatResourceType(resourceType string) string {
 	// Remove the Microsoft.* prefix and convert to title case
 	parts := strings.Split(resourceType, "/")
 	if len(parts) >= 2 {
-		return strings.Title(parts[len(parts)-1])
+		lastPart := parts[len(parts)-1]
+		caser := cases.Title(language.English)
+		return caser.String(lastPart)
 	}
 	return resourceType
 }
