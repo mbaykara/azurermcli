@@ -15,31 +15,39 @@ func (m Model) View() string {
 	sb.WriteString(styles.HeaderStyle.Render(m.header))
 	sb.WriteString("\n\n")
 
-	// Only show tabs in resources view
+	// Show context information in resources view
 	if m.currentView == "resources" {
-		tabs := []string{
-			"Clusters",
-			"Compute",
-			"Network",
-			"Storage",
-			"Web",
-			"All",
-		}
+		contextInfo := fmt.Sprintf("Subscription: %s | Resource Group: %s", m.selectedSub, m.selectedRG)
+		sb.WriteString(styles.HeaderStyle.Render(contextInfo))
+		sb.WriteString("\n\n")
 
+		// Show resource type tabs
 		var renderedTabs []string
-		for i, tab := range tabs {
+		for i, rType := range resourceTypes {
 			tabStyle := styles.InactiveTabStyle
-			if tab == m.currentTab {
+			if rType == m.selectedResourceType {
 				tabStyle = styles.ActiveTabStyle
 			}
 			// Add number prefix to tabs
-			tabText := fmt.Sprintf("%d: %s", (i+1)%6, tab) // Use modulo to make "All" tab "0"
+			tabText := fmt.Sprintf("%d: %s", (i+1)%len(resourceTypes), rType)
 			renderedTabs = append(renderedTabs, tabStyle.Render(tabText))
 		}
 
 		tabBar := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
-		sb.WriteString(styles.TabContainerStyle.Render(tabBar))
+		sb.WriteString(tabBar)
+		sb.WriteString("\n")
+
+		// Add a separator line under the tabs
+		separator := strings.Repeat("─", 100)
+		sb.WriteString(styles.InactiveTabStyle.Render(separator))
 		sb.WriteString("\n\n")
+
+		// Show search bar if in search mode
+		if m.searchMode {
+			searchPrompt := fmt.Sprintf("Search: %s█", m.searchQuery)
+			sb.WriteString(styles.SearchStyle.Render(searchPrompt))
+			sb.WriteString("\n\n")
+		}
 	}
 
 	// Content
@@ -61,12 +69,16 @@ func (m Model) View() string {
 	case "resourcegroups":
 		footerText += " • enter: view resources • esc: back to subscriptions"
 	case "resources":
-		footerText += " • tab/shift+tab or 1-5,0: switch view • esc: back to resource groups"
+		if m.searchMode {
+			footerText += " • enter: finish search • esc: cancel search"
+		} else {
+			footerText += " • ←/→ or 1-5: switch resource type • /: search • esc: back to resource groups"
+		}
 	}
-	
+
 	sb.WriteString(styles.FooterStyle.Render(footerText))
 
 	return sb.String()
 }
 
-// Add methods for updating table content... 
+// Add methods for updating table content...
